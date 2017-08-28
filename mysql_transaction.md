@@ -37,20 +37,20 @@
     | session A  | session B  | Result  | Comment |
     |------------|------------|---------|---------|
     | ```COMMIT;``` | ```COMMIT;``` | `OK` | End previous transactions |
-    | ```SELECT * FROM a FOR UPDATE;``` | - | `OK` | A try to lock |
-    | - | ```SELECT * FROM a FOR UPDATE;``` | `OK` | Expect to wait since it locked by A, but not  |
-    | - | ```UPDATE a SET c='m4' WHERE b='m1';```| `OK` | Expect to wait since it locked by A, but not  |
+    | ```SELECT * FROM a FOR UPDATE;``` | | `OK` | A try to lock |
+    | | ```SELECT * FROM a FOR UPDATE;``` | `OK` | Expect to wait since it locked by A, but not  |
+    | | ```UPDATE a SET c='c4' WHERE b='m1';```| `OK` | Expect to wait since it locked by A, but not  |
 
 - #### With using `index`: ```for update``` only lock the **corresponding rows**
 
     | session A  | session B  | Result  | Comment |
     |------------|------------|---------|---------|
-    | COMMIT; | COMMIT; | `OK` | End previous transactions |
-    | START TRANSACTION;|-|`OK`| |
-    | SELECT * FROM a WHERE b='m1' FOR UPDATE;|-|`OK`|Lock the first row|
-    | -| UPDATE a SET c='m0' WHERE b='m1';|`TIMEOUT`|Locked as expected|
-    | -| UPDATE a SET c='m1' WHERE b='n1';|`OK`|Other rows is free|
-    | -| UPDATE a SET c='m2' WHERE 1;|`TIMEOUT`|Locked as expected|
+    | ```COMMIT;``` | ```COMMIT;``` | `OK` | End previous transactions |
+    | ```START TRANSACTION;```| |`OK`| |
+    | ```SELECT * FROM a WHERE b='m1' FOR UPDATE;```| |`OK`|Lock the first row|
+    | | ```UPDATE a SET c='c0' WHERE b='m1';```|`TIMEOUT`|Locked as expected|
+    | | ```UPDATE a SET c='c1' WHERE b='n1';```|`OK`|Other rows is free|
+    | | ```UPDATE a SET c='c2' WHERE 1;```|`TIMEOUT`|Locked as expected|
 
 - #### Without using `index`: ```for update``` will lock the **whole table**
 
@@ -61,10 +61,10 @@
         ```
         | session A  | session B  | Result  | Comment |
         |------------|------------|---------|---------|
-        | COMMIT; | COMMIT; | `OK` | End previous transactions |
-        | START TRANSACTION;|-|`OK`| |
-        | SELECT * FROM a WHERE b='m1' FOR UPDATE;|-|`OK`|Lock the first row|
-        | -| UPDATE a SET c='m1' WHERE b='n1';|`TIMEOUT`|Other rows also locked|
+        | ```COMMIT;``` | ```COMMIT;``` | `OK` | End previous transactions |
+        | ```START TRANSACTION;```| |`OK`| |
+        | ```SELECT * FROM a WHERE b='m1' FOR UPDATE;```| |`OK`|Lock the first row|
+        | | ```UPDATE a SET c='c1' WHERE b='n1';```|`TIMEOUT`|Other rows also locked|
 
     - example 2:has index but not used: `b LIKE "%sth%"`
 
@@ -73,27 +73,27 @@
         ```
         | session A  | session B  | Result  | Comment |
         |------------|------------|---------|---------|
-        | COMMIT; | COMMIT; | `OK` | End previous transactions |
-        | START TRANSACTION;|-|`OK`| |
-        | SELECT * FROM a WHERE b LIKE "%m1%" FOR UPDATE;|-|`OK`|Lock the first row|
-        | -| UPDATE a SET c='m1' WHERE b='n1';|`TIMEOUT`|Other rows also locked|
+        | ```COMMIT;``` | ```COMMIT;``` | `OK` | End previous transactions |
+        | ```START TRANSACTION;```|-|`OK`| |
+        | ```SELECT * FROM a WHERE b LIKE "%m1%" FOR UPDATE;```|-|`OK`|Lock the first row|
+        | | ```UPDATE a SET c='c1' WHERE b='n1';```|`TIMEOUT`|Other rows also locked|
 
     - example 3: has index but not used: `b=1234` in transaction
 
         | session A  | session B  | Result  | Comment |
         |------------|------------|---------|---------|
-        | COMMIT; | COMMIT; | `OK` | End previous transactions |
-        | START TRANSACTION;|-|`OK`| |
-        | SELECT * FROM a WHERE b=1234 FOR UPDATE;|-|`OK`|Lock the first row|
-        | -| UPDATE a SET c='m1' WHERE b='n1';|`TIMEOUT`|Other rows also locked|
+        | ```COMMIT;``` | ```COMMIT;``` | `OK` | End previous transactions |
+        | ```START TRANSACTION;```| |`OK`| |
+        | ```SELECT * FROM a WHERE b=1234 FOR UPDATE;```| |`OK`|Lock the first row|
+        | | ```UPDATE a SET c='c1' WHERE b='n1';```|`TIMEOUT`|Other rows also locked|
 
-    - example 4: use index `for update`, but not for coming transaction
+    - example 4: Also be careful for the coming update
 
         | session A  | session B  | Result  | Comment |
         |------------|------------|---------|---------|
-        | COMMIT; | COMMIT; | `OK` | End previous transactions |
-        | START TRANSACTION;|-|`OK`| |
-        | SELECT * FROM a WHERE b='m1' FOR UPDATE;|-|`OK`|Lock the first row|
-        | -| UPDATE a SET c='m1' WHERE b=11;|`TIMEOUT`|Other rows also locked|
+        | ```COMMIT;``` | ```COMMIT;``` | `OK` | End previous transactions |
+        | ```START TRANSACTION;```| |`OK`| |
+        | ```SELECT * FROM a WHERE b='m1' FOR UPDATE;```| |`OK`|Lock the first row|
+        | | ```UPDATE a SET c='c1' WHERE b=11;```|`TIMEOUT`|Other rows also locked|
 
 
