@@ -30,7 +30,18 @@
     | m1 | m2 | m3 |
     | n1 | n2 | n3 |
 
-### Cases
+### Conclusions
+
+- ```for update``` will lock only in transaction
+- ```for update``` and ```update``` both lock in transaction
+- Lock range. depends on if `index` is used
+
+Todo:
+- insert&delete
+- repeatable read
+- rollback
+
+### Tests
 
 - #### ```for update``` only valid inside transaction
 
